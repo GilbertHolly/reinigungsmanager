@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123b36">
+<link rel="manifest" href="manifest.json">
+<title>Reinigungsmanager</title>
+<style>
+:root{--green:#123b36;--mint:#dff2e9;--bg:#f4f7f5;--ink:#182522;--muted:#71807a;--line:#e4ebe7;--white:#fff;--orange:#f2a65a;--red:#c84d4d}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--green);color:white;padding:22px 18px 18px;border-radius:0 0 22px 22px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}.brand{font-size:20px;font-weight:800;letter-spacing:-.4px}.sub{font-size:12px;color:#c6d8d1;margin-top:4px}
+main{max-width:760px;margin:auto;padding:16px 14px 100px}.switch{display:flex;background:#e8eeeb;padding:4px;border-radius:12px;margin:16px 0}.switch button{flex:1;border:0;background:transparent;padding:11px;border-radius:9px;font-weight:700;color:var(--muted)}.switch button.active{background:white;color:var(--green);box-shadow:0 1px 4px #102d2618}
+h2{font-size:20px;margin:20px 0 12px}h3{font-size:15px;margin:0 0 8px}.muted{color:var(--muted)}.small{font-size:12px}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:15px;margin:10px 0;box-shadow:0 2px 8px #18352b08}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.datebox{display:flex;align-items:center;gap:10px;background:white;border:1px solid var(--line);border-radius:13px;padding:10px 12px}.datebox input{border:0;font:inherit;font-weight:700;color:var(--green);background:transparent;min-width:0}
+button,.btn{cursor:pointer;border:0;border-radius:11px;padding:11px 13px;font:inherit;font-weight:700;background:var(--green);color:white}.btn.secondary,button.secondary{background:var(--mint);color:var(--green)}button.ghost{background:#f0f4f2;color:var(--green)}button.danger{background:#fff0f0;color:var(--red)}button:disabled{opacity:.45;cursor:not-allowed}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.stat{background:#ffffff;border:1px solid var(--line);padding:12px;border-radius:13px}.stat strong{display:block;font-size:23px;color:var(--green)}.stat span{font-size:11px;color:var(--muted)}
+.apartment{display:flex;gap:11px;align-items:flex-start}.check{width:24px;height:24px;accent-color:var(--green);flex-shrink:0;margin-top:2px}.aptbody{flex:1;min-width:0}.aptname{font-weight:800}.meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}.tag{display:inline-block;padding:5px 8px;border-radius:20px;background:#edf3f0;color:#42645a;font-size:11px;font-weight:700}.tag.done{background:#e0f4e7;color:#247442}.tag.running{background:#fff0d9;color:#9a5b0a}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.actions button{font-size:12px;padding:8px 10px}.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}.field label{font-size:12px;font-weight:700;color:#53645d}.field input,.field select,.field textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:white;font:inherit;color:var(--ink)}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.empty{text-align:center;padding:26px 12px;color:var(--muted)}.empty b{display:block;color:var(--ink);margin-bottom:5px}
+.hidden{display:none!important}.divider{height:1px;background:var(--line);margin:12px 0}.employee-tabs{display:flex;gap:8px;overflow:auto;padding-bottom:4px}.employee-tabs button{white-space:nowrap}.note{background:#fff8e9;border:1px solid #f5e5c4;border-radius:12px;padding:12px;font-size:12px;line-height:1.5;color:#71511e;margin:14px 0}
+footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:11px;backdrop-filter:blur(10px)}
+@media(max-width:430px){.formgrid{grid-template-columns:1fr}.stat strong{font-size:20px}.card{padding:13px}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><div class="brand">✦ Reinigungsmanager</div><div class="sub">Ferienwohnungen einfach organisieren</div></div><span class="tag" style="background:#ffffff20;color:white">Version 1.0</span></div></header>
+<main>
+<div class="switch"><button id="adminTab" class="active" onclick="setMode('admin')">Chefbereich</button><button id="staffTab" onclick="setMode('staff')">Mitarbeiter</button></div>
+<section id="adminView">
+<div class="row"><div><h2 style="margin:4px 0">Tagesplanung</h2><div class="muted small">Wohnungen auswählen und zuteilen</div></div><div class="datebox">📅 <input type="date" id="workDate"></div></div>
+<div class="statgrid"><div class="stat"><strong id="totalCount">0</strong><span>Geplant</span></div><div class="stat"><strong id="doneCount">0</strong><span>Erledigt</span></div><div class="stat"><strong id="openCount">0</strong><span>Offen</span></div></div>
+<div class="row"><h2>Wohnungen für diesen Tag</h2><button class="secondary" onclick="toggleAdd()">＋ Wohnung</button></div>
+<div id="addPanel" class="card hidden">
+<h3>Wohnung hinzufügen</h3>
+<div class="field"><label>Name der Wohnung</label><input id="newName" placeholder="z. B. Ferienwohnung Strandblick"></div>
+<div class="formgrid"><div class="field"><label>Adresse</label><input id="newAddress" placeholder="Straße, Ort"></div><div class="field"><label>Reinigungsdauer (Min.)</label><input id="newDuration" type="number" min="1" value="90"></div></div>
+<div class="field"><label>Besonderheiten</label><textarea id="newNotes" rows="2" placeholder="z. B. Bettwäsche wechseln"></textarea></div>
+<button onclick="addApartment()">Wohnung speichern</button> <button class="ghost" onclick="toggleAdd()">Abbrechen</button>
+</div>
+<div id="apartmentList"></div>
+<div class="card">
+<h3>Ausgewählte Wohnungen zuteilen</h3>
+<div class="field"><label>Mitarbeiter auswählen</label><select id="assignEmployee"></select></div>
+<button style="width:100%" onclick="assignSelected()">Ausgewählte Wohnungen zuteilen</button>
+</div>
+<div class="row"><h2>Mitarbeiter verwalten</h2><button class="secondary" onclick="toggleEmployee()">＋ Mitarbeiter</button></div>
+<div id="employeePanel" class="card hidden">
+<div class="field"><label>Name</label><input id="employeeName" placeholder="z. B. Max"></div>
+<button onclick="addEmployee()">Mitarbeiter hinzufügen</button> <button class="ghost" onclick="toggleEmployee()">Abbrechen</button>
+</div>
+<div class="card"><h3>Team</h3><div id="teamList" class="muted small"></div></div>
+</section>
+<section id="staffView" class="hidden">
+<div class="row"><div><h2 style="margin:4px 0">Mein Arbeitstag</h2><div class="muted small">Deine zugeteilten Wohnungen</div></div><div class="datebox">📅 <input type="date" id="staffDate"></div></div>
+<div class="field"><label>Als Mitarbeiter anzeigen</label><select id="staffSelect" onchange="renderStaff()"></select></div>
+<div id="staffList"></div>
+</section>
+<div class="note"><b>Demo-Hinweis:</b> Diese erste Version speichert Daten nur auf diesem Gerät im Browser. Noch keine echten Mitarbeiter-Logins oder gemeinsame Synchronisierung. Bitte zunächst nur mit Beispieldaten testen.</div>
+</main>
+<footer>Reinigungsmanager · Demo-Prototyp · Daten bleiben auf diesem Gerät</footer>
+<script>
+const $=id=>document.getElementById(id);
+const today=new Date().toISOString().slice(0,10);
+let data=JSON.parse(localStorage.getItem('rm_demo')||'null')||{
+ employees:[{id:'e1',name:'Max'},{id:'e2',name:'Lisa'}],
+ apartments:[
+ {id:'a1',name:'Ferienwohnung Nordsee',address:'Dorfstraße 8, Beispielort',duration:90,notes:'Bettwäsche wechseln',days:{}},
+ {id:'a2',name:'Ferienwohnung Strandblick',address:'Am Deich 12, Beispielort',duration:75,notes:'Terrasse prüfen',days:{}},
+ {id:'a3',name:'Ferienhaus Dünenhaus',address:'Dünenweg 4, Beispielort',duration:120,notes:'Schlüssel im Schlüsselkasten',days:{}}
+ ]};
+let selected={};
+function save(){localStorage.setItem('rm_demo',JSON.stringify(data));render()}
+function dayState(a,d){return a.days[d]||(a.days[d]={assigned:'',done:false,start:null,end:null})}
+function setMode(mode){$('adminView').classList.toggle('hidden',mode!=='admin');$('staffView').classList.toggle('hidden',mode!=='staff');$('adminTab').classList.toggle('active',mode==='admin');$('staffTab').classList.toggle('active',mode==='staff');render()}
+function toggleAdd(){$('addPanel').classList.toggle('hidden')}
+function toggleEmployee(){$('employeePanel').classList.toggle('hidden')}
+function addApartment(){
+ let name=$('newName').value.trim();if(!name){alert('Bitte einen Wohnungsnamen eingeben.');return}
+ data.apartments.push({id:'a'+Date.now(),name,address:$('newAddress').value.trim(),duration:Number($('newDuration').value)||90,notes:$('newNotes').value.trim(),days:{}});
+ ['newName','newAddress','newNotes'].forEach(id=>$(id).value='');$('addPanel').classList.add('hidden');save()
+}
+function addEmployee(){let name=$('employeeName').value.trim();if(!name){alert('Bitte einen Namen eingeben.');return}data.employees.push({id:'e'+Date.now(),name});$('employeeName').value='';$('employeePanel').classList.add('hidden');save()}
+function assignSelected(){let emp=$('assignEmployee').value;if(!emp){alert('Bitte zuerst einen Mitarbeiter anlegen oder auswählen.');return}let d=$('workDate').value;let count=0;data.apartments.forEach(a=>{if(selected[a.id]){dayState(a,d).assigned=emp;count++;selected[a.id]=false}});if(!count){alert('Bitte mindestens eine Wohnung anhaken.');return}save();alert(count+' Wohnung(en) zugeteilt.')}
+function setDone(id,d,checked){dayState(data.apartments.find(a=>a.id===id),d).done=checked;save()}
+function startWork(id,d){let s=dayState(data.apartments.find(a=>a.id===id),d);if(s.start){alert('Die Zeit läuft bereits.');return}s.start=Date.now();s.end=null;save()}
+function stopWork(id,d){let s=dayState(data.apartments.find(a=>a.id===id),d);if(!s.start){alert('Bitte zuerst die Arbeitszeit starten.');return}s.end=Date.now();s.done=true;save()}
+function fmt(ms){let m=Math.max(0,Math.floor(ms/60000));return Math.floor(m/60)+' Std. '+(m%60)+' Min.'}
+function render(){
+ let d=$('workDate').value||today;let list=$('apartmentList');list.innerHTML='';
+ let planned=data.apartments.filter(a=>a.days[d]&&(a.days[d].assigned||a.days[d].done));
+ $('totalCount').textContent=planned.length;$('doneCount').textContent=planned.filter(a=>a.days[d].done).length;$('openCount').textContent=planned.filter(a=>!a.days[d].done).length;
+ $('assignEmployee').innerHTML=data.employees.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')||'<option value="">Keine Mitarbeiter vorhanden</option>';
+ data.apartments.forEach(a=>{
+ let s=a.days[d]||{};let div=document.createElement('div');div.className='card';div.innerHTML=`<div class="apartment"><input class="check" type="checkbox" ${selected[a.id]?'checked':''} aria-label="Auswählen"><div class="aptbody"><div class="row"><div class="aptname">${esc(a.name)}</div><span class="tag ${s.done?'done':''}">${s.done?'Erledigt':s.assigned?'Zugewiesen':'Nicht geplant'}</span></div><div class="meta">${esc(a.address||'Keine Adresse hinterlegt')} · ca. ${a.duration} Min.<br>${esc(a.notes||'Keine Besonderheiten')}<br>${s.assigned?'Mitarbeiter: '+esc((data.employees.find(e=>e.id===s.assigned)||{}).name||'Unbekannt'):'Noch niemand zugeteilt'}</div><div class="actions"><button class="ghost" onclick="scheduleOne('${a.id}')">Für diesen Tag einplanen</button><button class="danger" onclick="deleteApartment('${a.id}')">Entfernen</button></div></div></div>`;
+ div.querySelector('input').onchange=e=>{selected[a.id]=e.target.checked};list.appendChild(div)
+ });
+ if(!data.apartments.length)list.innerHTML='<div class="empty"><b>Noch keine Wohnungen</b>Lege deine erste Wohnung an.</div>';
+ $('teamList').innerHTML=data.employees.map(e=>`<div class="row" style="padding:7px 0"><span>👤 ${esc(e.name)}</span><span class="muted">${data.apartments.filter(a=>Object.values(a.days).some(s=>s.assigned===e.id)).length} Zuteilungen</span></div>`).join('')||'Noch keine Mitarbeiter angelegt.';
+ $('staffSelect').innerHTML=data.employees.map(e=>`<option value="${e.id}">${esc(e.name)}</option>`).join('')||'<option value="">Keine Mitarbeiter</option>';
+ renderStaff()
+}
+function scheduleOne(id){let a=data.apartments.find(x=>x.id===id);dayState(a,$('workDate').value).planned=true;save()}
+function deleteApartment(id){if(!confirm('Wohnung wirklich aus der Liste entfernen?'))return;data.apartments=data.apartments.filter(a=>a.id!==id);save()}
+function renderStaff(){
+ let d=$('staffDate').value||today,emp=$('staffSelect').value;let list=$('staffList');list.innerHTML='';
+ let tasks=data.apartments.filter(a=>a.days[d]&&a.days[d].assigned===emp);
+ if(!tasks.length){list.innerHTML='<div class="card empty"><b>Heute ist noch nichts zugeteilt</b>Wenn der Chef Wohnungen zuteilt, erscheinen sie hier.</div>';return}
+ tasks.forEach(a=>{let s=a.days[d];let div=document.createElement('div');div.className='card';div.innerHTML=`<div class="row"><h3>${esc(a.name)}</h3><span class="tag ${s.done?'done':s.start?'running':''}">${s.done?'Erledigt':s.start?'In Arbeit':'Offen'}</span></div><div class="meta">📍 ${esc(a.address||'Keine Adresse hinterlegt')}<br>⏱ Vorgabe: ca. ${a.duration} Minuten<br>${esc(a.notes||'')}</div><div class="actions">${!s.start&&!s.done?`<button onclick="startWork('${a.id}','${d}')">▶ Arbeit starten</button>`:''}${s.start&&!s.end?`<button onclick="stopWork('${a.id}','${d}')">■ Arbeit beenden</button>`:''}${s.done?`<span class="tag done">Zeit: ${s.start&&s.end?fmt(s.end-s.start):'als erledigt markiert'}</span>`:''}</div>`;list.appendChild(div)})
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('workDate').value=today;$('staffDate').value=today;$('workDate').addEventListener('change',render);$('staffDate').addEventListener('change',render);
+render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body></html>
